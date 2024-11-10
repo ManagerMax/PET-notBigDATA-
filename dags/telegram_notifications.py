@@ -1,16 +1,20 @@
+from airflow.models import Variable
 import requests
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
 # Загрузите переменные среды для токена и чата
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+TELEGRAM_TOKEN = Variable.get("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = Variable.get("TELEGRAM_CHAT_ID")
+
+
+def on_success_callback(context):
+    task_instance = context.get("task_instance")
+    message = f"Спешу вас предупредить! Задача {task_instance.task_id} в DAGе {task_instance.dag_id} выполнена успешно!"
+    send_telegram_alert(message)
 
 
 def on_failure_callback(context):
     task_instance = context.get("task_instance")
-    message = f"Задача {task_instance.task_id} в DAG {task_instance.dag_id} завершилась с ошибкой!"
+    message = f"Спешу вас предупредить! Задача {task_instance.task_id} в DAGе {task_instance.dag_id} завершилась с ошибкой!"
     send_telegram_alert(message)
 
 

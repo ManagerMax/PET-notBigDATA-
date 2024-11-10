@@ -31,8 +31,8 @@ services:
     ports:
       - "8080:8080"
     command: >
-      bash -c "pip install python-dotenv &&
-               airflow webserver"
+      bash -c "pip install python-telegram-bot python-dotenv &&
+             airflow webserver"
 
   scheduler:
     image: apache/airflow:2.4.1
@@ -46,9 +46,8 @@ services:
     depends_on:
       - webserver
     command: >
-      bash -c "pip install python-dotenv &&
-               airflow scheduler"
-
+      bash -c "pip install python-telegram-bot python-dotenv &&
+             airflow webserver"
 volumes:
   postgres_db:
   airflow_logs:

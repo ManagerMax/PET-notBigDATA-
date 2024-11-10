@@ -5,7 +5,7 @@ import requests
 import pandas as pd
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
-from telegram_notifications import on_failure_callback
+from telegram_notifications import on_failure_callback, send_telegram_alert
 import os
 
 # загрузим переменные из .env
@@ -16,6 +16,13 @@ tokenApi = os.getenv("POLYGON_API_KEY")
 today_date = datetime.today().strftime("%Y-%m-%d")  # текущая дата
 tickers = ["AAPL", "MSFT", "GOOGL"]
 
+
+def on_dag_success(context):
+    dag_id = context.get("dag").dag_id
+    message = f"DAG {dag_id} успешно завершён!"
+    send_telegram_alert(message)
+
+
 # Параметры для всех задач DAG
 default_args = {
     "owner": "airflow",
@@ -23,14 +30,17 @@ default_args = {
     "email_on_failure": False,
     "email_on_retry": False,
     "retries": 1,
-    "retry_delay": timedelta(minutes=2),
+    "retry_delay": timedelta(minutes=1),
     "on_failure_callback": on_failure_callback,
 }
 
 # Определяем DAG
 # Название, параметры, интервал запуска
 with DAG(
-    "etl_tickers_data", default_args=default_args, schedule_interval="@daily"
+    "etl_tickers_data",
+    default_args=default_args,
+    schedule_interval="@daily",
+    on_success_callback=on_dag_success,
 ) as dag:
 
     def extract_data():
@@ -54,7 +64,7 @@ with DAG(
         return result
 
     def extract_news():
-        # news_data = {}
+        news_data = {}
         for ticker in tickers:
             url = f"https://api.polygon.io/v2/reference/news?ticker={ticker}&apiKey={tokenApi}"
             response = requests.get(url)
